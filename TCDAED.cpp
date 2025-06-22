@@ -1,5 +1,11 @@
 #include <iostream>
+#include <string>
+#include <chrono>
+#include <vector>
+#include <iomanip>
+using namespace std::chrono;
 using namespace std;
+
 class estrutura_dados {
     private:
         int comprimento;
@@ -317,6 +323,100 @@ public:
     }
     
 };
+
+class Usuario {
+public:
+    string nome;
+    int tempo_medio_atendimento; // em minutos
+    system_clock::time_point hora_entrada;
+    system_clock::time_point hora_estimada;
+
+    Usuario(string nome, int tempo_medio)
+        : nome(nome), tempo_medio_atendimento(tempo_medio) {
+        hora_entrada = system_clock::now();
+    }
+};
+
+class FilaBandejao {
+private:
+    vector<Usuario> fila;
+    int tempo_medio_global;
+
+public:
+    FilaBandejao(int tempo_medio_global = 5) : tempo_medio_global(tempo_medio_global) {}
+
+    void entrar_na_fila(string nome, int tempo_atendimento) {
+        Usuario novo(nome, tempo_atendimento);
+        novo.hora_estimada = calcular_horario_estimado();
+        fila.push_back(novo);
+        cout << nome << " entrou na fila. Estimativa: "
+             << formatar_horario(novo.hora_estimada) << endl;
+    }
+
+    void sair_da_fila(string nome) {
+        for (auto it = fila.begin(); it != fila.end(); ++it) {
+            if (it->nome == nome) {
+                fila.erase(it);
+                cout << nome << " saiu da fila.\n";
+                atualizar_estimativas();
+                return;
+            }
+        }
+        cout << "Usuário não encontrado na fila.\n";
+    }
+
+    void mostrar_fila() const {
+        cout << "\nFila atual:\n";
+        for (size_t i = 0; i < fila.size(); i++) {
+            cout << setw(2) << i + 1 << ". " << fila[i].nome
+                 << " - Estimativa: " << formatar_horario(fila[i].hora_estimada) << endl;
+        }
+    }
+
+private:
+    system_clock::time_point calcular_horario_estimado() const {
+        if (fila.empty())
+            return system_clock::now() + minutes(tempo_medio_global);
+        else {
+            auto ultimo = fila.back().hora_estimada;
+            return ultimo + minutes(tempo_medio_global);
+        }
+    }
+
+    void atualizar_estimativas() {
+        auto tempo = system_clock::now();
+        for (auto& usuario : fila) {
+            tempo += minutes(tempo_medio_global);
+            usuario.hora_estimada = tempo;
+        }
+    }
+
+    string formatar_horario(system_clock::time_point tp) const {
+        time_t t = system_clock::to_time_t(tp);
+        tm* tm_ptr = localtime(&t);
+        char buffer[9];
+        strftime(buffer, sizeof(buffer), "%H:%M:%S", tm_ptr);
+        return string(buffer);
+    }
+};
+
+// int main() {
+//     FilaBandejao bandejao;
+
+//     bandejao.entrar_na_fila("Ana", 5);
+//     bandejao.entrar_na_fila("João", 4);
+//     bandejao.entrar_na_fila("Carlos", 6);
+
+//     bandejao.mostrar_fila();
+
+//     cout << "\nCarlos desistiu...\n";
+//     bandejao.sair_da_fila("Carlos");
+
+//     bandejao.mostrar_fila();
+
+//     return 0;
+// }
+
 
 int main() {
     pilha minha_pilha;
